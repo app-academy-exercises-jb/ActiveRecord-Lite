@@ -42,7 +42,9 @@ class SastNode
 
   def to_s
     if type == :operator
-      "#{@value[0]} #{options[:operator]} #{@value[1].to_s}"
+      "{#{@value[0]} #{options[:operator]} #{@value[1].to_s}}"
+    # elsif type == :query
+    #   "{:#{@type}=>#{@value},\n#{options.values.join(",\n")}}"
     else
       @options.nil? ?
         "{:#{@type}=>#{@value}}" :
@@ -52,9 +54,9 @@ class SastNode
 
   def inspect
     if type == :operator
-      "#{@value[0]} #{options[:operator]} #{@value[1].to_s}"
-    elsif type == :query
-      "{:#{@type}=>#{@value},\n#{options.values.join(",\n")}}"
+      "{#{@value[0]} #{options[:operator]} #{@value[1].to_s}}"
+    # elsif type == :query
+    #   "{:#{@type}=>#{@value},\n#{options.values.join(",\n")}}"
     else
       @options.nil? ? 
         {@type => @value} :

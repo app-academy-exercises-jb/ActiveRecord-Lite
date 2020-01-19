@@ -2,7 +2,7 @@ This is a clone of some of the basic functionality offered by ActiveRecord. It w
 
 The basic usage can be obtained by opening a connection to a SQLite3 database:
   
-  connection = BaseConnection.new('path_to_file.db')
+>`connection = BaseConnection.new('path_to_file.db')`
 
 This essentially uses the SQLite3 gem to establish a connection to the db, gather information about the tables present and their appurtenant columns. It uses this information to create a new model class for each table. On each of these classes, we gain access to a series of query methods. 
 

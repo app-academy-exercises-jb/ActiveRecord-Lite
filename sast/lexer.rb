@@ -1,7 +1,7 @@
 module Lexer
   QUERIES = %w(select from join where limit)
-  MODIFIERS = %w(distinct and as or)
-  OPERATORS = %w(on between like in)
+  MODIFIERS = %w(distinct as)
+  OPERATORS = %w(on between like in and or)
 
   def self.tokenize(query)
     tokens = []

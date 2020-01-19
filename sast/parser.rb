@@ -1,5 +1,5 @@
 # This parser is intended to work with a certain subset of SQLite SELECT statements. 
-# This is that subset. <Bracketed expressions> are optional. Subqueries may be named with AS:
+# This is that subset. <Bracketed expressions> are optional. Subqueries must be named with AS:
 # SELECT
 #   <DISTINCT>
 #   table.column, ...,
@@ -42,16 +42,25 @@ module Parser
       counter.call
       options = Hash.new { |h,k| h[k.type] = k}
 
-      # debugger
       case current_token.type
       when :reserved
         node_tokens = []
         type = current_token.value.downcase.to_sym
         
         counter.call
-        until current_token == nil || (current_token.type == :reserved && (current_token.value != "join" && current_token.value != "limit"))
+        until current_token == nil || (current_token.type == :reserved && current_token.value != "join")
           node_tokens << current_token
           counter.call
+        end
+
+        # we've detected a subquery
+        if node_tokens[-1].value == "("
+          until current_token.value == ")"
+            node_tokens << current_token
+            counter.call
+          end
+          node_tokens << current_token
+          2.times { counter.call; node_tokens << current_token} #catch the name
         end
         
         # we've got a SELECT, which may have a DISTINCT, options, and several selected values
@@ -62,16 +71,17 @@ module Parser
             (options[:distinct] = true; self.generate_tree(node_tokens[1..-1])) :
             gather_values.call(node_tokens, ->(t) { t.type == :comma })
 
-          debugger
           until count >= tokens.length - 1
             count -= 1
             options[walk.call]
           end
         end
         
-        # we've got a WHERE which might have ANDs 
+        # we've got a WHERE which has a series of operators and operands 
         if type == :where
-          value = gather_values.call(node_tokens, ->(t) { t.type == :modifier })
+          #value = gather_values.call(node_tokens, ->(t) { t.type == :modifier && t.value != "as" })
+          # here we must implement an operator-precedence parser
+          value = self.generate_tree(node_tokens)
         end
 
         # we've got a FROM, which may have multiple tables, subqueries, and JOINs
@@ -101,9 +111,9 @@ module Parser
           value = self.generate_tree(node_tokens)
         end
 
+        # we've found a LIMIT
         if type == :limit
-          debugger
-          SastNode.new(type: :limit, value: self.generate_tree(node_tokens))
+          value = self.generate_tree(node_tokens)
         end
         
         return_options.call(options,type,value)
@@ -111,7 +121,7 @@ module Parser
         # we're in a subquery. collect the tokens till we find the closing paren, and call ::generate_tree on that
         subquery_tokens = [current_token]
         options = {}
-        
+
         until current_token.type == :paren && current_token.value == ")"
           counter.call
           subquery_tokens << current_token
@@ -123,10 +133,10 @@ module Parser
         end        
 
         value = self.generate_tree(subquery_tokens[1..-2])
-        # debugger
         return_options.call(options,:query,value)
       when :word
         if tokens[count+1]&.type == :operator
+          # we have to define a hierarchy for operator precedence
           name = self.generate_tree([tokens[count]])
           value = self.generate_tree(tokens[count+2..-1])
           
@@ -140,7 +150,6 @@ module Parser
         self.generate_tree(tokens[1..-1])
       end
     }
-    # debugger
     walk.call
   end
 end
