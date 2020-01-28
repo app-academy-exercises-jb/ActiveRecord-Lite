@@ -10,7 +10,7 @@ require_relative 'Modules/relatable'
 require_relative 'Modules/validator'
 require_relative 'Modules/equalizer'
 require_relative 'Modules/searchable'
-require_relative "sast/sql_ast"
+require_relative "sastman/sql_ast"
 
 module BaseConnection
   class << self

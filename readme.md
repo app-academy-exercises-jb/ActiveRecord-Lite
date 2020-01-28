@@ -32,7 +32,7 @@ We also define association methods on the generated classes. In this way, we can
 
 The query methods actually return a BaseRelation object. This allows the query methods to be lazily loaded and stackable, as query methods are instance methods of BaseRelation objects. 
 
-In attemptiong to implement query methods as stackable (which currently is non functional) it became obvious that what was necessary was a way of taking different bits of SQL and being able to compose it into a actual SELECT statement which would fetch relevant data. To this end I am implementing Sast (SQL AST), being inspired by ActiveRecord's Arel.
+In attemptiong to implement query methods as stackable (which currently is non functional) it became obvious that what was necessary was a way of taking different bits of SQL and being able to compose it into a actual SELECT statement which would fetch relevant data. To this end I am implementing SastMan (SQL AST Manager), being inspired by ActiveRecord's Arel.
 
-Sast is in essence a parser of SQL SELECT statements. It generates an abstract syntax tree of a given statement by performing lexical and syntactic analysis on a query string. It (will) also able to take two ASTs and compose them into a single one. It (will) also have a `#to_sql` method which returns the AST as a SQL compliant query string.
+SastMan is in essence a parser of SQL SELECT statements. It generates an abstract syntax tree of a given statement by performing lexical and syntactic analysis on a query string. It (will) also able to take two ASTs and compose them into a single one. It (will) also have a `#to_sql` method which returns the AST as a SQL compliant query string.
 

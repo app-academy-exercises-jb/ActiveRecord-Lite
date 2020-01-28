@@ -1,10 +1,10 @@
-class Sast
+class SastMan
   module Lexer
     QUERIES = %w(select from join where limit)
     MODIFIERS = %w(distinct as)
     OPERATORS = %w(on between like in and or)
 
-    def self.tokenize(query)
+    def tokenize(query)
       tokens = []
 
       current_token = ""

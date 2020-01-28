@@ -16,7 +16,7 @@
 # We observe the syntactic rules set out here: https://www.sqlite.org/lang_select.html
 
 require "byebug"
-class Sast
+class SastMan
   module Parser
     PRECEDENCE = {
       nil => -1, 
@@ -36,7 +36,7 @@ class Sast
       "/" => 5,
       "*" => 5
     }
-    def self.generate_tree(tokens)
+    def generate_tree(tokens)
       count = -1
       current_token = nil;
 
@@ -64,7 +64,6 @@ class Sast
         if PRECEDENCE[tok.value] > PRECEDENCE[opers[-1].value]
           opers << tok
         else
-          # raise "fatal: binary operation with more than two operands" unless opans.length == 2
           new_operand = self.generate_tree([opers.pop, opans.pop, opans.pop])
           opans << new_operand
           opers << tok
@@ -78,7 +77,6 @@ class Sast
         paren_count = 0
         subquery = []
         
-
         tokens.each { |tok| 
           if paren_count > 0
             subquery << tok
@@ -99,18 +97,14 @@ class Sast
             end
           end
         }
-        
 
         until operators.length == 2
-          # operands << comp_ops.call(operators, operands, operators.pop)
           new_operand = self.generate_tree([operators.pop, operands.pop, operands.pop])
           operands << new_operand
         end
 
         self.generate_tree([operators.pop, operands.pop, operands.pop])
 
-        # raise "fatal: did not resolve" unless operands.length == 1
-        # operands[0]
       }
 
       walk = ->() {
@@ -135,9 +129,8 @@ class Sast
               counter.call
             end
             node_tokens << current_token
-            # FROM + JOIN must name subqueries
-            # WHERE need not
-            2.times { counter.call; node_tokens << current_token} unless type == :where #catch the name
+            # FROM + JOIN must name subqueries, WHERE need not
+            2.times { counter.call; node_tokens << current_token} unless type == :where
             raise SyntaxError.new("subquery must be named") if node_tokens[-1].nil?
           end
           
@@ -157,7 +150,6 @@ class Sast
           
           # we've got a WHERE which has a series of operators and operands 
           if type == :where
-            #value = gather_values.call(node_tokens, ->(t) { t.type == :modifier && t.value != "as" })
             value = self.generate_tree(node_tokens)
           end
 
@@ -166,7 +158,7 @@ class Sast
             tables = []
             joins = []
             has_joins = false
-            # separate our tables and joins
+            
             node_tokens.each { |token|
               has_joins = true if !has_joins && token.value == "join"
               has_joins ? 
@@ -178,10 +170,7 @@ class Sast
               options[:join] = gather_values.call(joins, ->(j) { j.type == :reserved })
             end
 
-            
-
             raise SyntaxError.new("must select FROM a table or subquery") if tables.empty?
-            
             value = gather_values.call(tables, ->(t) { t.type == :comma })
           end
           
@@ -196,8 +185,8 @@ class Sast
           end
           
           return_options.call(options,type,value)
+        # we're in a subquery
         when :paren
-          # we're in a subquery. collect the tokens till we find the closing paren, and call ::generate_tree on that
           subquery_tokens = [current_token]
           options = {}
 
@@ -224,8 +213,7 @@ class Sast
         when :comma, :modifier
           self.generate_tree(tokens[1..-1])
         when :operator
-          # we expect to have two tokens.
-          # tokens[0], tokens[1]
+          # we assume every operator to be binary
           left = tokens[1].is_a?(SastNode) ? tokens[1] : self.generate_tree([tokens[1]])
           right = tokens[2].is_a?(SastNode) ? tokens[2] :  self.generate_tree([tokens[2]])
           SastNode.new(type: :operator, value: [right, left], options: {operator: current_token.value})
