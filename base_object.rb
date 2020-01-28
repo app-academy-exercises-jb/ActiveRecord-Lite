@@ -1,14 +1,5 @@
-require 'sqlite3'
-
-# require_relative 'relatable'
-# require_relative 'validator'
-# require_relative 'equalizer'
-# require_relative 'finalizer'
-# require_relative 'searchable'
-
 class BaseObject
   class << self
-    # define custom attr_ methods here, such as the relations has_one et al
     def opt_parser(opts)
       raise NotImplementedError.new("must be implemented by inheriting class")
     end
@@ -41,7 +32,7 @@ class BaseObject
 
     db = self.class.instance_variable_get(:@db)
 
-    if self.id.nil? #new entry
+    if self.id.nil?
       db.instance.execute(<<-SQL)
         INSERT INTO
           #{table_name} (#{keys.join(", ")})
@@ -50,8 +41,8 @@ class BaseObject
       SQL
       
       @id = db.instance.last_insert_row_id
-    else #updating entry
-      raise "#{self} not in database" unless self.class.find_by_id(self.id)
+    else 
+      raise "#{self} not in database" unless self.class.find_by_id(self.id) == self
 
       values = instance_variables.map { |var| 
         var.to_s[1..-1] + ' = "' + instance_variable_get(var).to_s + '"' unless var == :@id

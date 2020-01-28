@@ -1,8 +1,28 @@
+# ActiveRecord Lite
+
+### Background/Intro
+
 This is a clone of some of the basic functionality offered by ActiveRecord. It was born out of an attempt to practice some metaprogramming techniques that I had just learned, and grew into something a little more serious.
 
-The basic usage can be obtained by opening a connection to a SQLite3 database:
+### Usage
+
+The basic usage can be obtained by opening a connection to a SQLite3 database. This will return an array of generated classes, on which you can both define relevant relations and run query methods. 
   
->`connection = BaseConnection.new('path_to_file.db')`
+>```ruby
+>require_relative 'base_connection'
+>BaseConnection.connect('path_to_sqlite3.db')
+>
+>class User
+>  has_many :questions
+>end
+>class Question
+>  belongs_to :user
+>end
+>
+>User.first.questions
+>```
+
+### Feature Set
 
 This essentially uses the SQLite3 gem to establish a connection to the db, gather information about the tables present and their appurtenant columns. It uses this information to create a new model class for each table. On each of these classes, we gain access to a series of query methods. 
 
@@ -16,14 +36,3 @@ In attemptiong to implement query methods as stackable (which currently is non f
 
 Sast is in essence a parser of SQL SELECT statements. It generates an abstract syntax tree of a given statement by performing lexical and syntactic analysis on a query string. It (will) also able to take two ASTs and compose them into a single one. It (will) also have a `#to_sql` method which returns the AST as a SQL compliant query string.
 
-expected usage:
-```ruby
-connection = BaseConnection.new('path_to_sqlite3.db')
-
-class User
-  has_many :questions
-end
-class Question
-  belongs_to :user
-end
-```
