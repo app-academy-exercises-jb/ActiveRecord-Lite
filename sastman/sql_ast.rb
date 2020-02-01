@@ -49,6 +49,7 @@ class SastMan
       collect_opts.call(qur)
     end
     
+    # debugger
     composed_query = ""
     [:select, :from, :where, :limit].each do |qur|
       if options.has_key?(qur)
@@ -57,6 +58,8 @@ class SastMan
           "#{qur} #{options[qur].map(&:to_sql).join(",")} "
         when :where
           "#{qur} #{options[qur].map(&:to_sql).join(" AND ")} "
+        when :limit
+          "#{qur} #{options[qur].map(&:to_i).min}"
         end
       end
     end

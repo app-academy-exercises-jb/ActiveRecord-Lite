@@ -78,6 +78,10 @@ class SastMan
       @value
     end
 
+    def to_i
+      Integer(@value)
+    end
+
     def to_s
       "{:#{@type}=>#{@value}}"
     end

@@ -48,6 +48,7 @@ class BaseRelation
     rescue => exception
       puts exception.message
     end
+    @loaded = false
     self
   end
   
