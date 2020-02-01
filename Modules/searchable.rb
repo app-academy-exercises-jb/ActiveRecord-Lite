@@ -20,21 +20,11 @@ module Searchable
       child.class_exec(k) { attr_accessor k }
     }
   end
-
-  def self.included(child)
-    # anything necessary for BaseRelations?
-  end
-  
-  
-  # def joins(relation)
-  
-  # end
   
   def all
     query = SastMan.new("SELECT #{@table.name}.* FROM #{@table.name}")
     return_relation(query)
   end
-  
   
   def find_by(attribs)
     where(attribs).first
@@ -54,8 +44,13 @@ module Searchable
     return_relation(query)
   end
   
+  # returns values, not a relation
   def first(n=1)
-    klass.limit(n)
+    # ret_mult = Proc.new { |res| res.length == 1 ? res[0] : res }
+    return values[0] if self.class == BaseRelation && loaded && n == 1
+    result = limit(n).load
+    # ret_mult.call(result)
+    result.length == 1 ? result[0] : result
   end
 
   def select(*attribs)
@@ -81,7 +76,13 @@ module Searchable
     return_relation(query)
   end
 
-  # def joins
+  def joins(*joined)
+    unless joined.all? { |j| [Symbol, String, Hash].any? { |k| j.is_a?(k) } }
+      raise ArgumentError.new("must be symbol, string, or hash")
+    end
+
+    raise NotImplementedError.new
+  end
   # def order_by
   # def group_by
   # def having
@@ -102,6 +103,11 @@ reset
 require_relative 'base_connection'
 BaseConnection.connect('questions.db')
 class User
- has_many :questions
+  has_many :questions,
+    foreign_key: :author_id
+end
+class Question
+  belongs_to :author,
+    class_name: "User"
 end
 User.first.questions

@@ -20,6 +20,7 @@ module Relatable
       end
 
     else
+      # debugger
       table = opts[:class_name] || assocs.to_s.classify 
       klass = Object.const_get(table)
       primary_key = opts[:primary_key] || "id"
@@ -27,7 +28,7 @@ module Relatable
       
       self.define_method assocs do
         pk = self.send primary_key.to_sym
-        klass.find_by(foreign_key.to_sym => pk)
+        klass.where(foreign_key.to_sym => pk)
       end
     end
 
@@ -57,8 +58,9 @@ module Relatable
 
     
     self.define_method assoc do
+      debugger
       fk = self.send foreign_key.to_sym
-      klass.find_by(primary_key.to_sym => fk).first
+      klass.find_by(primary_key.to_sym => fk)
     end
 
     self.define_method (assoc.to_s + "=").to_sym do |assoc_model|

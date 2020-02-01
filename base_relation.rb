@@ -40,6 +40,11 @@ class BaseRelation
       i += 1
     end
   end
+
+  def [](n)
+    load unless loaded
+    @values[n]
+  end
   
   def relate(relation)
     raise "expected #{relation} to be a BaseRelation" unless relation.is_a?(BaseRelation)
