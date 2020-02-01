@@ -1,6 +1,7 @@
 class SastMan
   class SastNode
-    attr_reader :value, :options
+    attr_reader :options
+    attr_accessor :value
     # attr_accessor :next, :prev
     # redefine self.new in order to return different types of nodes based on the options being passed in
     # types of nodes:
@@ -87,12 +88,11 @@ class SastMan
       case type
       when :from, :select
         value = @value.map(&:to_sql).join(", ")
-      when :join, :where
+      when :join, :where, :limit
         value = @value.to_sql
       end
       
       options = type == :from ? @options[:join] : @options.values
-
 
       "#{@type.upcase} #{value} #{options&.map(&:to_sql)&.join(" ")}".chomp(" ")
     end
