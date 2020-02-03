@@ -9,17 +9,17 @@ This is a clone of some of the basic functionality offered by ActiveRecord. It w
 The basic usage can be obtained by opening a connection to a SQLite3 database. This will return an array of generated classes, on which you can both define relevant relations and run query methods. 
   
 >```ruby
->require_relative 'base_connection'
->BaseConnection.connect('questions.db')
->
->class User
->  has_many :questions,
->    foreign_key: :author_id
->end
->class Question
->  belongs_to :author,
->    class_name: "User"
->end
+> require_relative 'base_connection'
+> BaseConnection.connect('questions.db')
+> 
+> class User
+>   has_many :questions,
+>     foreign_key: :author_id
+> end
+> class Question
+>   belongs_to :author,
+>     class_name: "User"
+> end
 >```
 
 ## Feature Set
@@ -52,5 +52,5 @@ We also define association methods on the generated classes. In this way, we can
 
 As I was implementing the chainability/stackability of methods, it became obvious that what was necessary was a way of taking different bits of SQL and being able to compose it into an actual `SELECT` statement which would fetch relevant data. To this end I implemented `SastMan` (SQL AST Manager), being inspired by ActiveRecord's `Arel`.
 
-`SastMan` is in essence a parser of SQL `SELECT` statements. It generates an abstract syntax tree of a given statement by performing lexical and syntactic analysis on a query string. It is also able to take two ASTs and compose them into a single one. `SastMan` objects also have a `#to_sql` method which returns the AST as a SQL compliant query string.
+`SastMan` is in essence a parser of a subset of SQL `SELECT` statements (check `parser.rb` for more documentation). It generates an abstract syntax tree of a given statement by performing lexical and syntactic analysis on a query string. It is also able to take two ASTs and compose them into a single one. `SastMan` objects also have a `#to_sql` method which returns the AST as a SQL compliant query string.
 
