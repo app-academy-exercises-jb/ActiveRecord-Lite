@@ -6,7 +6,7 @@ require 'active_support/inflector'
 require_relative 'base_object'
 require_relative 'base_table'
 require_relative "base_relation"
-require_relative 'Modules/relatable'
+require_relative 'Modules/associatable'
 require_relative 'Modules/validator'
 require_relative 'Modules/equalizer'
 require_relative 'Modules/searchable'
@@ -59,7 +59,7 @@ module BaseConnection
           def self.table; @table; end
           attr_reader :db, :table
 
-          extend Relatable
+          extend Associatable
           extend Validator
           extend Searchable
           include Equalizer

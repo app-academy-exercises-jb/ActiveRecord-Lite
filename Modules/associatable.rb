@@ -1,4 +1,8 @@
-module Relatable
+module Associatable
+  def self.extended(child) 
+    child.instance_variable_set(:@associations, Hash.new)
+    child.singleton_class.class_exec() { define_method :associations do; @associations; end }
+  end
   #
   # collective associations generate these methods:
   # #assocs, #assocs=, #assoc_ids
@@ -7,17 +11,19 @@ module Relatable
   # class_name, primary_key, foreign_key, through, source
   #
   def has_many(assocs, scope=nil, **opts)
+    raise ArgumentError.new("First argument must be a symbol") unless assocs.is_a?(Symbol)
+
     if opts[:through]
-      source = opts[:source] || assocs 
-      klass = Object.const_get(source) 
+      # source = opts[:source] || assocs 
+      # klass = Object.const_get(source) 
       
-      foreign_key = opts[:through] 
+      # foreign_key = opts[:through] 
       
-      self.define_method assocs do 
-        pk = self.send primary_key.to_sym 
-        full_context = self.class.table.name.to_s + "." + self.class.table.primary_key.to_s
-        klass.joins(foreign_key).where("#{full_context} = #{pk}")
-      end
+      # self.define_method assocs do 
+      #   pk = self.send primary_key.to_sym 
+      #   full_context = self.class.table.name.to_s + "." + self.class.table.primary_key.to_s
+      #   klass.joins(foreign_key).where("#{full_context} = #{pk}")
+      # end
 
     else
       # debugger
@@ -30,6 +36,8 @@ module Relatable
         pk = self.send primary_key.to_sym
         klass.where(foreign_key.to_sym => pk)
       end
+
+      @associations[assocs] = {pk: primary_key, fk: foreign_key, table: klass.table.name}
     end
 
     self
@@ -69,6 +77,7 @@ module Relatable
       self.send (foreign_key + "=").to_sym, pk
     end
 
+    @associations[assoc] = {pk: foreign_key, fk: primary_key, table: klass.table.name}
     self
   end
 end
