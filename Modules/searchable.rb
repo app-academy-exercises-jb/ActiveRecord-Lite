@@ -46,10 +46,8 @@ module Searchable
   
   # returns values, not a relation
   def first(n=1)
-    # ret_mult = Proc.new { |res| res.length == 1 ? res[0] : res }
     return values[0] if self.class == BaseRelation && loaded && n == 1
     result = limit(n).load
-    # ret_mult.call(result)
     result.length == 1 ? result[0] : result
   end
 
@@ -77,11 +75,33 @@ module Searchable
   end
 
   def joins(*joined)
+    # if a string, joined must have length == 1
+    # if joined length > 1, all elements must be: [Hash, Symbol]
     unless joined.all? { |j| [Symbol, String, Hash].any? { |k| j.is_a?(k) } }
       raise ArgumentError.new("must be symbol, string, or hash")
     end
 
-    raise NotImplementedError.new
+    query = ""
+
+    associated = Hash.new { |h,k| h[k] = false }
+
+    joined.each do |join|
+      case join
+      when String
+        query += join
+      when Symbol
+        if klass.associations.keys.include?(join) && associated[join] == false
+          assoc = associations[join]
+          query += " JOIN #{assoc[:table]} ON #{assoc[:table]}.#{assoc[:fk]} = #{klass.table.name}.#{assoc[:pk]} "
+          associated[join] = true
+        end
+      when Hash
+        raise NotImplementedError.new("nested association not yet supported")
+      end
+    end
+
+    query = SastMan.new(query)
+    return_relation(query)
   end
   # def order_by
   # def group_by
@@ -102,12 +122,28 @@ __END__
 reset
 require_relative 'base_connection'
 BaseConnection.connect('questions.db')
+class Question 
+  belongs_to :author, class_name: "User"
+  has_many :replies
+  # has_many :likers, through: :question_likes
+  has_many :followers, class_name: "QuestionFollow"
+end
 class User
-  has_many :questions,
-    foreign_key: :author_id
+  has_many :questions, foreign_key: "author_id"
+  has_many :replies
+  # has_many :followed_questions, through: :question_follows
+  # has_many :liked_questions, through: :question_likes
 end
-class Question
-  belongs_to :author,
-    class_name: "User"
+class QuestionLike
+  belongs_to :user, class_name: "User", foreign_key: "liker_id"
+  belongs_to :question
 end
-User.first.questions
+class Reply
+  # has_one :parent, class_name: "Reply", foreign_key: "parent_reply_id", optional: true
+  belongs_to :author, class_name: "User", foreign_key: "user_id"
+  belongs_to :question
+end
+class QuestionFollow
+  belongs_to :follower, class_name: "User"
+  belongs_to :question
+end

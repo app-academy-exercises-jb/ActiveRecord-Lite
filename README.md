@@ -11,7 +11,8 @@ The basic usage can be obtained by opening a connection to a SQLite3 database. T
 >```ruby
 > require_relative 'base_connection'
 > BaseConnection.connect('questions.db')
-> 
+> # => [User, Question, Reply, QuestionFollow, QuestionLike]
+>
 > class User
 >   has_many :questions,
 >     foreign_key: :author_id
@@ -26,7 +27,7 @@ The basic usage can be obtained by opening a connection to a SQLite3 database. T
 
 ### Query Methods
 
-First of all, every generated class gains access to a `find_by_?` method for every column name in the corresponding table. They also gain two general query methods: `where` and `find_by`, both of which take a hash of options or a string. `where` is a lazy loader which returns a `BaseRelation` instance, whereas `find_by` is an eager loader: it returns the first record found, or nil. There are several other query methods, including: `all`, <s>`joins`</s>, `select`, and `limit`. `BaseRelation` objects represent a query (stored as a `SastMan` instance), and will return the values of the query results as soon as we need them. `BaseRelation` objects also have access to the query methods. 
+First of all, every generated class gains access to a `find_by_?` method for every column name in the corresponding table. They also gain two general query methods: `where` and `find_by`, both of which take a hash of options or a string. `where` is a lazy loader which returns a `BaseRelation` instance, whereas `find_by` is an eager loader: it returns the first record found, or nil. There are several other query methods, including: `all`, `joins`, `select`, and `limit`. `BaseRelation` objects represent a query (stored as a `SastMan` instance), and will return the values of the query results as soon as we need them. `BaseRelation` objects also have access to the query methods. 
 
 These methods can be chained in whatever order is preferred, like this:
 

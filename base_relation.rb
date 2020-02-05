@@ -53,12 +53,13 @@ class BaseRelation
     rescue => exception
       puts exception.message
     end
+    # ensure we reload after we've been related
     @loaded = false
     self
   end
   
   def load
-    puts @query.to_sql
+    puts "queried: #{@query.to_sql}"
     begin
       @values = @db.instance.execute @query.to_sql
     rescue => exception

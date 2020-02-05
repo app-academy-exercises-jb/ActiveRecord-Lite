@@ -40,12 +40,9 @@ class SastMan
       count = -1
       current_token = nil;
 
-      return_options = ->(options,type,value) {
-        options.empty? ?
-          SastNode.new(type: type, value: value) :
-          SastNode.new(type: type, value: value, options: options)
-      }
+      counter = ->() { count += 1; current_token = tokens[count] }
 
+      # 
       gather_values = ->(tokens, prc) {
         values = []
         current_val = [tokens[0]]
@@ -57,8 +54,6 @@ class SastMan
         values << current_val
         values.map! { |val| self.generate_tree(val) }
       }
-
-      counter = ->() { count += 1; current_token = tokens[count] }
 
       comp_ops = ->(opers, opans, tok) {
         if PRECEDENCE[tok.value] > PRECEDENCE[opers[-1].value]
@@ -110,11 +105,15 @@ class SastMan
       walk = ->() {
         counter.call
         options = Hash.new { |h,k| h[k.type] = k}
-
+        # debugger
         case current_token.type
         when :reserved
           node_tokens = []
           type = current_token.value.downcase.to_sym
+          
+          # 
+          # In the following two loops, we gather all of the tokens which will define the node which walk.call will return.
+          # 
           
           counter.call
           until current_token == nil || (current_token.type == :reserved && current_token.value != "join")
@@ -134,8 +133,10 @@ class SastMan
             raise SyntaxError.new("subquery must be named") if node_tokens[-1].nil?
           end
           
-          # we've got a SELECT, which may have a DISTINCT, options, and several selected values
-          if type == :select
+          
+          case type
+          when :select
+            # we've got a SELECT, which may have a DISTINCT, options, and several selected values
             raise SyntaxError.new("expecting values for SELECT statement") if node_tokens.empty?
 
             value = node_tokens[0].value == "distinct" ?
@@ -146,15 +147,11 @@ class SastMan
               count -= 1
               options[walk.call]
             end
-          end
-          
-          # we've got a WHERE which has a series of operators and operands 
-          if type == :where
+          when :where
+            # we've got a WHERE which has a series of operators and operands 
             value = self.generate_tree(node_tokens)
-          end
-
-          # we've got a FROM, which may have multiple tables, subqueries, and JOINs
-          if type == :from
+          when :from
+            # we've got a FROM, which may have multiple tables, subqueries, and JOINs
             tables = []
             joins = []
             has_joins = false
@@ -172,19 +169,16 @@ class SastMan
 
             raise SyntaxError.new("must select FROM a table or subquery") if tables.empty?
             value = gather_values.call(tables, ->(t) { t.type == :comma })
-          end
-          
-          # we've found a JOIN, which may name a table or subquery and expects an operator ON
-          if type == :join
+          when :join
+            # we've found a JOIN, which may name a table or subquery and expects an operator ON
+            
             value = self.generate_tree(node_tokens)
-          end
-
-          # we've found a LIMIT
-          if type == :limit
+          when :limit
+            # we've found a LIMIT
             value = self.generate_tree(node_tokens)
           end
           
-          return_options.call(options,type,value)
+          SastNode.new(type: type, value: value, options: options)
         # we're in a subquery
         when :paren
           subquery_tokens = [current_token]
@@ -201,7 +195,7 @@ class SastMan
           end        
 
           value = self.generate_tree(subquery_tokens[1..-2])
-          return_options.call(options,:query,value)
+          SastNode.new(type: type, value: value, options: options)
         when :word, :value
           if tokens[count+1]&.type == :operator
             
@@ -216,10 +210,12 @@ class SastMan
           # we assume every operator to be binary
           left = tokens[1].is_a?(SastNode) ? tokens[1] : self.generate_tree([tokens[1]])
           right = tokens[2].is_a?(SastNode) ? tokens[2] :  self.generate_tree([tokens[2]])
+          # shunting yard flips our operands. though equivalent, we flip them back for ease of inspecting
           SastNode.new(type: :operator, value: [right, left], options: {operator: current_token.value})
         end
       }
       
+      return if tokens.empty?
       walk.call
     end
   end

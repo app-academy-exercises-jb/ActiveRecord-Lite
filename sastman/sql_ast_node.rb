@@ -28,10 +28,10 @@ class SastMan
 
     end
 
-    def initialize(type:, value: nil, options:{})
+    def initialize(type:, value: nil, options: {})
       @type = type
       @value = value
-      @options = options
+      @options = options.empty? ? {} : options
     end
 
     def type
@@ -95,6 +95,8 @@ class SastMan
       when :join, :where, :limit
         value = @value.to_sql
       end
+
+      # debugger
       
       options = type == :from ? @options[:join] : @options.values
 

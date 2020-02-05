@@ -79,6 +79,7 @@ class SastMan
   def ensure_core(table)
     # check for SELECT and FROM options
     return if @query && @query.type == :select && @query.options.keys.include?(:from)
+    return unless @query
     generate_core(table)
   end
   
@@ -92,13 +93,16 @@ class SastMan
     # generate generic SELECT x.* FROM x sast as core utilizing table's info
     if @query && @query.type == :select
       @query.options[:from] = self.class.parse("from #{table.name}")
-      # debugger
       return
     elsif @query && @query.type == :from
       new_query = self.class.parse("select #{table.name}.*")
       @default_core = true
+    elsif @query && @query.type == :join
+      @query = self.class.parse("select #{table.name}.* from #{table.name} #{query.to_sql}")
+      @default_core = true
+      return
     else
-      # where, joins, limit
+      # where, limit
       new_query = self.class.parse("select #{table.name}.* from #{table.name}")
       @default_core = true
     end
